@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# Install system tools
+# System dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     git \
@@ -8,34 +8,31 @@ RUN apt-get update && apt-get install -y \
     npm \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Hermes Agent AND the required server dependencies explicitly
-# This fixes the "API Server: aiohttp not installed" error
-RUN pip install --no-cache-dir hermes-agent aiohttp uvicorn
+# Install from Git (most reliable) + extras needed for gateway
+RUN pip install --no-cache-dir \
+    "git+https://github.com/NousResearch/hermes-agent.git#egg=hermes-agent[web]" \
+    uvicorn \
+    aiohttp
 
-# Setup required directories
+# Hermes environment
 ENV HERMES_HOME=/opt/data
 ENV PATH="/opt/data/.local/bin:${PATH}"
 RUN mkdir -p /opt/data/.hermes
-VOLUME [ "/opt/data" ]
 
+VOLUME ["/opt/data"]
 WORKDIR /app
 
-# NETWORK CONFIGURATION
-# 1. Force the internal server to listen on 0.0.0.0 (not localhost)
-ENV API_HOST=0.0.0.0
-ENV API_SERVER_HOST=0.0.0.0
-ENV HOST=0.0.0.0
-
-# 2. Force the port to 10000 to match Render
-ENV PORT=10000
-ENV API_PORT=10000
-ENV API_SERVER_PORT=10000
-
-# 3. Allow external connections
-ENV API_SERVER_ENABLED=true
-ENV GATEWAY_ALLOW_ALL_USERS=true
+# Important Render + gateway settings
+ENV API_HOST=0.0.0.0 \
+    API_SERVER_HOST=0.0.0.0 \
+    HOST=0.0.0.0 \
+    PORT=10000 \
+    API_PORT=10000 \
+    API_SERVER_PORT=10000 \
+    API_SERVER_ENABLED=true \
+    GATEWAY_ALLOW_ALL_USERS=true
 
 EXPOSE 10000
 
-# OFFICIAL ENTRYPOINT: Uses the CLI which handles the imports correctly
-CMD ["hermes", "gateway", "run"]
+# Test import before running
+CMD ["sh", "-c", "python -c 'import hermes_agent; print(\"hermes_agent imported OK\")' && hermes gateway run"]
