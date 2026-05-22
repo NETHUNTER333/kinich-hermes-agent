@@ -22,4 +22,4 @@ ENV API_SERVER_ENABLED=true
 ENV API_SERVER_PORT=8642
 
 # Start Hermes in API server mode
-CMD ["hermes", "start", "--api"]
+CMD  hermes gateway  --dev
