@@ -1,23 +1,22 @@
 FROM python:3.11-slim
 
+# System dependencies
 RUN apt-get update && apt-get install -y \
     git curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Use uv for reliable installation (this often fixes import issues)
+# Install uv + hermes-agent (this method works better)
 RUN pip install --no-cache-dir uv
-
-# Force a clean install of the package + web extras
 RUN uv pip install --system "hermes-agent[web] @ git+https://github.com/NousResearch/hermes-agent.git"
 
-# Setup Hermes
+# Hermes setup
 ENV HERMES_HOME=/opt/data
 RUN mkdir -p /opt/data/.hermes
 VOLUME ["/opt/data"]
 
 WORKDIR /app
 
-# Render + Gateway settings
+# Environment variables for gateway on Render
 ENV API_HOST=0.0.0.0 \
     API_SERVER_HOST=0.0.0.0 \
     HOST=0.0.0.0 \
@@ -29,11 +28,5 @@ ENV API_HOST=0.0.0.0 \
 
 EXPOSE 10000
 
-# Strong diagnostic CMD
-CMD ["sh", "-c", "
-    echo '=== Python path ===' && python -c 'import sys; print(sys.path)' && 
-    echo '=== Checking hermes_agent ===' && 
-    python -c 'import hermes_agent; print(\"✅ Success: hermes_agent version\", hermes_agent.__version__)' && 
-    echo '=== Starting Gateway ===' && 
-    hermes gateway run
-"]
+# Fixed CMD (single line for Render compatibility)
+CMD sh -c "echo '=== Python path ===' && python -c 'import sys; print(sys.path)' && echo '=== Checking hermes_agent ===' && python -c 'import hermes_agent; print(\"✅ Success: hermes_agent imported\")' && echo '=== Starting Gateway ===' && hermes gateway run"
