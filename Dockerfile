@@ -27,5 +27,5 @@ ENV GATEWAY_ALLOW_ALL_USERS=true
 
 EXPOSE 10000
 
-# FIX: Import from 'hermes_agent' rather than 'hermes' to resolve ModuleNotFoundError
-CMD ["python", "-m", "uvicorn", "hermes_agent.gateway.platforms.api_server:web", "--host", "0.0.0.0", "--port", "10000"]
+# PRODUCTION ENTRYPOINT: Direct uvicorn mapping targeting the standard 'app' layout on 0.0.0.0
+CMD ["python", "-m", "uvicorn", "hermes_agent.gateway.platforms.api_server:app", "--host", "0.0.0.0", "--port", "10000"]
