@@ -11,15 +11,20 @@ RUN apt-get update && apt-get install -y \
 # Install Hermes Agent core via pip
 RUN pip install --no-cache-dir hermes-agent
 
-# Set work directory
+# Set data directory and home environment required by the Nous Research core
+ENV HERMES_HOME=/opt/data
+ENV PATH="/opt/data/.local/bin:${PATH}"
+RUN mkdir -p /opt/data
+VOLUME [ "/opt/data" ]
+
 WORKDIR /app
 
-# Expose the API server port
-EXPOSE 8642
-
-# Enable the API server mode and define startup
+# Force the container proxy to listen on Render's required internal network port
+ENV PORT=10000
+ENV API_SERVER_PORT=10000
 ENV API_SERVER_ENABLED=true
-ENV API_SERVER_PORT=8642
 
-# Start Hermes in API server mode
-CMD  hermes gateway  --dev
+EXPOSE 10000
+
+# OFFICIAL COMMAND: Run the gateway server in foreground mode
+CMD ["hermes", "gateway", "run"]
